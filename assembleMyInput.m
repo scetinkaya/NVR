@@ -3,103 +3,94 @@ function assembleMyInput
 dbstop if error;
 dbstop if warning;
 
-%rdcFilename1                                   = 'N-H_medium1.m';
-%rdcFilename2                                   = 'N-H_medium2.m';
-%rdcFilename1                                   = 'N-H_medium.m';
-%rdcFilename2                                   = 'C-H_medium.m';
-%chRDCs                                        = load('C-H_medium1.m');
-combinedResonancesAndProtonCoordinatesFilename = 'combinedResonancesAndProtonCoordinates.txt';
-sse_helixFilename                              = 'sse_helix.txt';
-%sse_sheetFilename                              = 'sse_sheet.txt';
-%nhVectorsFilename                              = 'N-H_vectors.m';
+rdcFilename1                                   = 'N-H_medium1.m'; 
+combinedResonancesAndProtonCoordinatesFilename = 'combinedResonancesAndProtonCoordinates.txt';  
+dsspFilename                                   ='model_1BVH_1_withHydrogens.parsedDSSP'; 
+nhVectorsFilename                              = 'N-H_vectors.m';  
 outfilename                                    = 'myinput.m';
 
 
 
-%nhRDCs                                         = load(rdcFilename1);
-%ccaRDCs                                        = load(rdcFilename2);
+nhRDCs                                         = load(rdcFilename1);
+
 
 [RESNUMS resonanceAA_Name H_CS N_CS protonX protonY protonZ] ...
     = textread(combinedResonancesAndProtonCoordinatesFilename,'%d %s %f %f %f %f %f');
 
-
-[sseTypes_helix sseIndex_helix sseIndex_helix resName1_helix chainName1_helix resIndex1_helix resName2_helix ...
- chainName2_helix resIndex2_helix someOtherIndex_helix lengthOfSSE_helix] = textread(sse_helixFilename,'%s %d %d %s %s %d %s %s %d %d %d');
-
-%[sheet strandNumberInCurrentSheet sheetId numStrandsInCurrentSheet resName1_sheet chainName1_sheet resIndex1_sheet resName2_sheet chainName2_sheet resIndex2_sheet strandSenseWrtPrevious atomName residueName chainId resSeqNumber atomName residueName chainID resSeqNumber] ...
-%    = textread(sse_sheetFilename,'%s %d %s %d %s %s %d %s %s %d %d %s %s %s %d %s %s %s %d');
-
-%nhVectors   = load(nhVectorsFilename);
+[resIndex1 resIndex2 dsspType] = textread(dsspFilename, '%d %d %s');
 
 
+nhVectors   = load(nhVectorsFilename);
+
+
+for k=1:resIndex1(1)-1
+    ss(k,1) = 'C';
+end
+    for j=1:size(resIndex1,1)
+        for k=resIndex1(j):resIndex2(j)
+            ss(k,1) = determineDsspType(dsspType(j));
+        end
+        if j < size(resIndex1,1)
+            c = resIndex1(j+1);
+        else
+            c = length(RESNUMS);
+        end
+        for k=resIndex2(j)+1:c-1
+            ss(k,1) = 'C';
+        end
+    end
+    ss(c,1) = 'C';
+ for j=(size(nhRDCs,1)+1):size(RESNUMS,1)
+    nhRDCs(j,2)=-999;
+ end   
 fprintf(1, 'check out %s\n', outfilename);
 fid         = fopen(outfilename, 'w');
 
-for i = 1:length(RESNUMS)
-  sseType   = determineSseTypeIsHelixOrNot(RESNUMS(i),...
-					   resIndex1_helix,resIndex2_helix);
-  
-  if (sseType == 'C')
- %   sseType = determineSseTypeIsSheetOrNot(RESNUMS(i),resIndex1_sheet,resIndex2_sheet);
-  else
-    assert (sseType == 'H');
-  end
-  
-  
-  
-%  fprintf(fid, '%d\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t%s\t%d\t%f\t%f\t%f\n', RESNUMS(i), resonanceAA_Name{i}, nhRDCs(i,2), ccaRDCs(i,2), ...
-%		    nhVectors(i,2),nhVectors(i,3),nhVectors(i,4),H_CS(i),N_CS(i),sseType, 'Y',0,protonX(i),protonY(i),protonZ(i));
 
-%  fprintf(fid, '%d\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t%s\t%d\t%f\t%f\t%f\n', RESNUMS(i), resonanceAA_Name{i}, nhRDCs(i,2), -999.00, ...
-%		    nhVectors(i,2),nhVectors(i,3),nhVectors(i,4),H_CS(i),N_CS(i),sseType, 'Y',0,protonX(i),protonY(i),protonZ(i));
+    
+for i = 1:size(RESNUMS,1)
+    [nhVector_Index,c] = find(nhVectors(:,1) == RESNUMS(i));
+    [nhRDCs_Index,c] = find(nhRDCs(:,1) == RESNUMS(i));
+    if (RESNUMS(i) ~= 0) && (size(ss,1)>=RESNUMS(i))
+        secondaryStr = ss(RESNUMS(i));
+    else
+        secondaryStr = 'C';
+    end
+    if (isempty(nhVector_Index))
+        fprintf(fid, '%d\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t%s\t%d\t%f\t%f\t%f\n', RESNUMS(i), resonanceAA_Name{i}, nhRDCs(nhRDCs_Index,2), -999, ...
+		    -999,-999,-999,H_CS(i),N_CS(i),secondaryStr, 'Y',0,protonX(i),protonY(i),protonZ(i));
+    else
+        fprintf(fid, '%d\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t%s\t%d\t%f\t%f\t%f\n', RESNUMS(i), resonanceAA_Name{i}, nhRDCs(nhRDCs_Index,2), -999, ...
+		    nhVectors(nhVector_Index,2),nhVectors(nhVector_Index,3),nhVectors(nhVector_Index,4),H_CS(i),N_CS(i),secondaryStr, 'Y',0,protonX(i),protonY(i),protonZ(i));
+    end
+    
 
-%  fprintf(fid, '%d\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t%s\t%d\t%f\t%f\t%f\n', RESNUMS(i), resonanceAA_Name{i}, -999.00, -999.00, ...
-%
-             %		    nhVectors(i,2),nhVectors(i,3),nhVectors(i,4),H_CS(i),N_CS(i),sseType, 'Y',0,protonX(i),protonY(i),protonZ(i));
-	     
-	     fprintf(fid, '%d\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t%s\t%d\t%f\t%f\t%f\n', RESNUMS(i), resonanceAA_Name{i}, -999.00, -999.00, -999.00,-999.00,-999.00,H_CS(i),N_CS(i),sseType, 'Y',0,protonX(i),protonY(i),protonZ(i));	     
+%   if (i<=size(nhVectors,1))
+%       fprintf(fid, '%d\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t%s\t%d\t%f\t%f\t%f\n', RESNUMS(i), resonanceAA_Name{i}, nhRDCs(i,2), -999, ...
+% 		    nhVectors(i,2),nhVectors(i,3),nhVectors(i,4),H_CS(i),N_CS(i),ss(i), 'Y',0,protonX(i),protonY(i),protonZ(i));
+%   else
+%       fprintf(fid, '%d\t%s\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%s\t%s\t%d\t%f\t%f\t%f\n', RESNUMS(i), resonanceAA_Name{i}, nhRDCs(i,2), -999, ...
+% 		    -999,-999,-999,H_CS(i),N_CS(i),ss(i), 'Y',0,protonX(i),protonY(i),protonZ(i));
+%   end
+
 
 end
 
 fclose(fid);
 
-fprintf(1, 'enter return to exit debug mode.\n');
-keyboard
-		
-%returns 'N' if sseType is determined to be non-helix, 'H' if helix.
-function sseType = determineSseTypeIsHelixOrNot(residueNumber, resIndex1, ...
-						resIndex2);
-		
-sseIndex = -1;
-assert (length(resIndex1) == length(resIndex2));
-for i = 1:length(resIndex1)
-  if ((resIndex1(i) <= residueNumber) & (residueNumber <= resIndex2(i)))
-   sseIndex = i;
-   break;
-  end
+% fprintf(1, 'enter return to exit debug mode.\n');
+% keyboard
 end
-
-if (sseIndex == -1)
-  sseType = 'C';
-else
-  sseType     = 'H';
-%    elseif (strcmp(sseTypeName, 'SHEET') == 1)
-%      sseType = 'B';
-%    else
-%      error('unknown sseType');
-%    end
-end
-
-%returns 'C' if sseType is determined to be non-sheet, 'B' if sheet.
-function sseType = determineSseTypeIsSheetOrNot(residueNumber, resIndex1, ...
-						resIndex2);
 		
-
-sseType = determineSseTypeIsHelixOrNot(residueNumber, resIndex1, resIndex2);
-
-if (sseType == 'H')
-  sseType = 'B';
-else
-  sseType = 'C';
+function dsspType = determineDsspType(dsspType)
+if strcmp(dsspType,'E') || (strcmp(dsspType,'B'))
+     dsspType = 'B';
+ else if (strcmp(dsspType,'G'))|| (strcmp(dsspType,'I')) || (strcmp(dsspType,'H'))
+         dsspType = 'H';
+     else if (strcmp(dsspType,'T')) || (strcmp(dsspType,'S')) || (strcmp(dsspType,'C'))
+             dsspType = 'C';
+         end
+     end
+end
 end
 
