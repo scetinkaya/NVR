@@ -58,33 +58,32 @@ fprintf(1, 'printed all NOEs that are closer than %f A.\n', ...
 	threshold);
 fprintf(1, 'note. these are residue indices.\n');
 fclose(fid);
-keyboard
+%keyboard
 
-numSimulatedNOEs = 250;
-NTH = 6;
-
-
-
-
-for noeIndex = 1:numSimulatedNOEs
-
-  foundA_PeakResiduePair   = 0;
-
-  while (~foundA_PeakResiduePair)
-    randomRelResidue1Index   = randi(length(HX),1,1);
-    relResidueIndices        = find(ALLDISTS(randomRelResidue1Index, :) < NTH);
-    if (~isempty(relResidueIndices))
-      relResidue2Index       = relResidueIndices(randi(length(relResidueIndices),1,1));
-      if (relResidue2Index ~= randomRelResidue1Index)
-	foundA_PeakResiduePair = 1;
-	fprintf(1, 'found a pair at a distance of %f ', ...
-		ALLDISTS(randomRelResidue1Index, relResidue2Index));
-      end
-    end
-  end
-  
-  fprintf(1,   'for residues %d and %d\n', residueIndex(randomRelResidue1Index), residueIndex(relResidue2Index));
-  fprintf(fid, '%d %d\n', residueIndex(randomRelResidue1Index), residueIndex(relResidue2Index));
-end
-
-fclose(fid);
+% numSimulatedNOEs = 250;
+% NTH = 6;
+% 
+% 
+% 
+% 
+% for noeIndex = 1:numSimulatedNOEs
+% 
+%   foundA_PeakResiduePair   = 0;
+% 
+%   while (~foundA_PeakResiduePair)
+%     randomRelResidue1Index   = randi(length(HX),1,1);
+%     relResidueIndices        = find(ALLDISTS(randomRelResidue1Index, :) < NTH);
+%     if (~isempty(relResidueIndices))
+%       relResidue2Index       = relResidueIndices(randi(length(relResidueIndices),1,1));
+%       if (relResidue2Index ~= randomRelResidue1Index)
+% 	foundA_PeakResiduePair = 1;
+% 	fprintf(1, 'found a pair at a distance of %f ', ...
+% 		ALLDISTS(randomRelResidue1Index, relResidue2Index));
+%       end
+%     end
+%   end
+%   
+%   fprintf(1,   'for residues %d and %d\n', residueIndex(randomRelResidue1Index), residueIndex(relResidue2Index));
+%   fprintf(fid, '%d %d\n', residueIndex(randomRelResidue1Index), residueIndex(relResidue2Index));
+% end
+%fclose(fid);
